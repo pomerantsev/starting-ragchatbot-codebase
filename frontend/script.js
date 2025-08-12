@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -29,6 +30,8 @@ function setupEventListeners() {
         if (e.key === 'Enter') sendMessage();
     });
     
+    // New Chat button
+    newChatButton.addEventListener('click', handleNewChat);
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -165,6 +168,33 @@ function escapeHtml(text) {
 }
 
 // Removed removeMessage function - no longer needed since we handle loading differently
+
+async function handleNewChat() {
+    try {
+        // Clear backend session if one exists
+        if (currentSessionId) {
+            await fetch(`${API_URL}/session/clear`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(currentSessionId)
+            });
+        }
+        
+        // Reset frontend state
+        await createNewSession();
+        
+        // Focus the chat input for immediate use
+        chatInput.focus();
+        
+    } catch (error) {
+        console.error('Error clearing session:', error);
+        // Still create new session on frontend even if backend fails
+        await createNewSession();
+        chatInput.focus();
+    }
+}
 
 async function createNewSession() {
     currentSessionId = null;
