@@ -245,6 +245,47 @@ header h1 {
     color: var(--text-secondary);
 }
 
+.source-link {
+    color: #60a5fa; /* Blue-400 - WCAG AA compliant on dark background */
+    text-decoration: underline;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.source-link:hover {
+    color: #93c5fd; /* Blue-300 - lighter blue for hover */
+    text-decoration: underline;
+}
+
+.source-link:focus {
+    outline: 2px solid #fbbf24; /* Amber-400 - high contrast on dark background */
+    outline-offset: 2px;
+    background-color: rgba(251, 191, 36, 0.1); /* Subtle amber background highlight */
+}
+
+.sources-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sources-list li {
+    margin-bottom: 0.25rem;
+    padding-left: 1rem;
+    position: relative;
+}
+
+.sources-list li:before {
+    content: "•";
+    color: var(--text-secondary);
+    position: absolute;
+    left: 0;
+}
+
+.sources-list li:last-child {
+    margin-bottom: 0;
+}
+
 /* Markdown formatting styles */
 .message-content h1,
 .message-content h2,

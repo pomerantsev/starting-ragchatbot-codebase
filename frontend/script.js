@@ -122,10 +122,30 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Format sources as a list with proper links
+        const sourcesList = sources.map(source => {
+            // Handle structured source objects
+            if (source && typeof source === 'object' && source.text) {
+                const sourceText = escapeHtml(source.text);
+                if (source.link && source.link !== null) {
+                    const sourceLink = escapeHtml(source.link);
+                    return `<li><a href="${sourceLink}" target="_blank" class="source-link">${sourceText}</a></li>`;
+                } else {
+                    return `<li>${sourceText}</li>`;
+                }
+            } else {
+                // Fallback for plain text sources
+                const sourceStr = typeof source === 'string' ? source : JSON.stringify(source);
+                return `<li>${escapeHtml(sourceStr)}</li>`;
+            }
+        }).join('');
+        
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">
+                    <ul class="sources-list">${sourcesList}</ul>
+                </div>
             </details>
         `;
     }
