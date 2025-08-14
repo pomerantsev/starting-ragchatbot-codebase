@@ -1,5 +1,7 @@
-import anthropic
 from typing import List, Optional
+
+import anthropic
+
 
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
@@ -44,17 +46,16 @@ Provide only the direct answer to what was asked.
         self.model = model
 
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
 
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None,
-                         max_rounds: int = 2) -> str:
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: Optional[str] = None,
+        tools: Optional[List] = None,
+        tool_manager=None,
+        max_rounds: int = 2,
+    ) -> str:
         """
         Generate AI response with support for sequential tool calling.
 
@@ -76,13 +77,17 @@ Provide only the direct answer to what was asked.
         # Execute up to max_rounds of tool calling
         response = None
         for round_num in range(1, max_rounds + 1):
-            response = self._execute_single_round(messages, system_content, tools, round_num, max_rounds)
+            response = self._execute_single_round(
+                messages, system_content, tools, round_num, max_rounds
+            )
 
             # Handle tool execution if tools were used
             if response.stop_reason == "tool_use" and tool_manager:
                 # If we haven't reached max rounds, prepare for next round
                 if round_num < max_rounds:
-                    messages = self._prepare_next_round(messages, response, tool_manager)
+                    messages = self._prepare_next_round(
+                        messages, response, tool_manager
+                    )
                     continue
                 else:
                     # Max rounds reached, execute tools one final time then return
@@ -98,22 +103,34 @@ Provide only the direct answer to what was asked.
         # Fallback: return last response if max rounds reached
         return self._extract_final_response(response)
 
-    def _build_system_content(self, conversation_history: Optional[str], max_rounds: int) -> str:
+    def _build_system_content(
+        self, conversation_history: Optional[str], max_rounds: int
+    ) -> str:
         """Build system content with conversation history and round context."""
         base_content = self.SYSTEM_PROMPT
         if conversation_history:
-            base_content = f"{base_content}\n\nPrevious conversation:\n{conversation_history}"
+            base_content = (
+                f"{base_content}\n\nPrevious conversation:\n{conversation_history}"
+            )
         return base_content
 
-    def _execute_single_round(self, messages: List, system_content: str, tools: Optional[List],
-                             round_num: int, max_rounds: int):
+    def _execute_single_round(
+        self,
+        messages: List,
+        system_content: str,
+        tools: Optional[List],
+        round_num: int,
+        max_rounds: int,
+    ):
         """Execute a single round of Claude API interaction with error handling."""
         try:
             # Build API parameters
             api_params = {
                 **self.base_params,
                 "messages": messages.copy(),
-                "system": self._add_round_context(system_content, round_num, max_rounds)
+                "system": self._add_round_context(
+                    system_content, round_num, max_rounds
+                ),
             }
 
             # Add tools if available (keep tools available in each round)
@@ -130,6 +147,7 @@ Provide only the direct answer to what was asked.
 
     def _create_error_response(self, error_message: str):
         """Create a mock response for error scenarios."""
+
         class MockResponse:
             def __init__(self, error_message):
                 self.stop_reason = "end_turn"
@@ -142,7 +160,9 @@ Provide only the direct answer to what was asked.
 
         return MockResponse(error_message)
 
-    def _add_round_context(self, system_content: str, round_num: int, max_rounds: int) -> str:
+    def _add_round_context(
+        self, system_content: str, round_num: int, max_rounds: int
+    ) -> str:
         """Add round-specific context to system content."""
         if max_rounds > 1:
             context_note = f"\n\nCURRENT CONTEXT: Round {round_num} of {max_rounds} maximum tool calling rounds."
@@ -150,7 +170,6 @@ Provide only the direct answer to what was asked.
                 context_note += " This is your final round - provide complete answer."
             return system_content + context_note
         return system_content
-
 
     def _prepare_next_round(self, messages: List, response, tool_manager) -> List:
         """
@@ -185,35 +204,37 @@ Provide only the direct answer to what was asked.
             if content_block.type == "tool_use":
                 try:
                     tool_result = tool_manager.execute_tool(
-                        content_block.name,
-                        **content_block.input
+                        content_block.name, **content_block.input
                     )
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block.id,
-                        "content": tool_result
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block.id,
+                            "content": tool_result,
+                        }
+                    )
                 except Exception as e:
                     # Add error result to prevent API failure
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block.id,
-                        "content": f"Tool execution failed: {str(e)}"
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block.id,
+                            "content": f"Tool execution failed: {str(e)}",
+                        }
+                    )
 
         return tool_results
 
     def _extract_final_response(self, response) -> str:
         """Extract text content from Claude's response."""
-        if hasattr(response, 'content') and response.content:
+        if hasattr(response, "content") and response.content:
             # Handle multi-block responses (text + tool calls)
             text_blocks = []
             for block in response.content:
-                if hasattr(block, 'text') and block.text and block.text.strip():
+                if hasattr(block, "text") and block.text and block.text.strip():
                     text_blocks.append(block.text.strip())
 
             if text_blocks:
                 return " ".join(text_blocks)
 
         return "I wasn't able to generate a proper response. Please try rephrasing your question."
-

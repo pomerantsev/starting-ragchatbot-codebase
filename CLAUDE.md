@@ -22,6 +22,25 @@ echo "ANTHROPIC_API_KEY=your_key_here" > .env
 cd backend && uv run uvicorn app:app --reload --port 8000
 ```
 
+**Code Quality Commands:**
+```bash
+# Format code (black + isort)
+./scripts/format.sh
+
+# Run linting (flake8 + mypy)
+./scripts/lint.sh
+
+# Run all quality checks (format + lint + tests)
+./scripts/quality.sh
+
+# Individual tool commands
+uv run black .           # Format with black
+uv run isort .           # Sort imports
+uv run flake8           # Lint with flake8
+uv run mypy .           # Type check with mypy
+uv run pytest backend/tests/ -v  # Run tests
+```
+
 **Access Points:**
 - Web Interface: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
